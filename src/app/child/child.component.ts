@@ -8,15 +8,13 @@ import {ConfirmResolver} from "../confirm-resolver";
     <p>
       child works!
     </p>
-    <div *ngFor="let i of fields">input</div>
-  `,
-  styles: [
-  ]
+    <div *ngFor="let id of fields">input, id: {{ id }}</div>
+  `
 })
 export class ChildComponent implements OnInit, OnDestroy {
 
   @Input()
-  add$!: Observable<void>
+  add$!: Observable<number>
 
   @Input()
   remove$!: Observable<void>
@@ -33,13 +31,13 @@ export class ChildComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.add$
       .pipe(takeUntil(this.onDestroy$))
-      .subscribe(() => {
-        this.fields.push(this.fields.length);
+      .subscribe((id) => {
+        this.fields.push(id);
       });
 
     this.remove$
       .pipe(
-        switchMap(() => this.confirmResolver.confirm$()),
+        switchMap(() => this.confirmResolver.confirm$(this.fields[this.fields.length - 1])),
         filter(Boolean),
         takeUntil(this.onDestroy$)
       )

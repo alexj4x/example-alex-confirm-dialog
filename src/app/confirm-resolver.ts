@@ -1,5 +1,5 @@
 import {Observable} from "rxjs";
 
 export interface ConfirmResolver {
-  confirm$(): Observable<boolean>;
+  confirm$(id: number): Observable<boolean>;
 }
