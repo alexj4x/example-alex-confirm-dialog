@@ -1,6 +1,5 @@
 import {Component, Input, OnDestroy, OnInit} from '@angular/core';
-import {filter, Observable, Subject, switchMap, takeUntil} from "rxjs";
-import {ConfirmResolver} from "../confirm-resolver";
+import {filter, Observable, of, Subject, switchMap, takeUntil} from "rxjs";
 
 @Component({
   selector: 'app-child',
@@ -8,7 +7,7 @@ import {ConfirmResolver} from "../confirm-resolver";
     <p>
       child works!
     </p>
-    <div *ngFor="let id of fields">input, id: {{ id }}</div>
+    <div *ngFor="let field of fields">{{ field.id }} modified: <input type="checkbox" #checkbox (change)="field.modified = checkbox.checked"/></div>
   `
 })
 export class ChildComponent implements OnInit, OnDestroy {
@@ -20,9 +19,9 @@ export class ChildComponent implements OnInit, OnDestroy {
   remove$!: Observable<void>
 
   @Input()
-  confirmResolver!: ConfirmResolver;
+  verifyRemoval$!: (id: number, modified: boolean) => Observable<boolean>;
 
-  fields: Array<number> = [];
+  fields: Array<Field> = [];
 
   private readonly onDestroy$: Subject<void> = new Subject<void>();
 
@@ -32,12 +31,19 @@ export class ChildComponent implements OnInit, OnDestroy {
     this.add$
       .pipe(takeUntil(this.onDestroy$))
       .subscribe((id) => {
-        this.fields.push(id);
+        this.fields.push({id, modified: false});
       });
 
     this.remove$
       .pipe(
-        switchMap(() => this.confirmResolver.confirm$(this.fields[this.fields.length - 1])),
+        switchMap(() => {
+          const lastField = this.fields[this.fields.length - 1];
+          if (lastField) {
+          return this.verifyRemoval$(lastField.id, lastField.modified)
+          } else {
+            return of(false);
+          }
+        }),
         filter(Boolean),
         takeUntil(this.onDestroy$)
       )
@@ -52,3 +58,5 @@ export class ChildComponent implements OnInit, OnDestroy {
   }
 
 }
+
+interface Field {id: number, modified: boolean};
